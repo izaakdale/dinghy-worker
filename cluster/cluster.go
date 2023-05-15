@@ -18,6 +18,10 @@ func Setup(bindAddr, bindPort, advertiseAddr, advertisePort, clusterAddr, cluste
 	conf.MemberlistConfig.ProtocolVersion = 3 // Version 3 enable the ability to bind different port for each agent
 	conf.NodeName = name
 
+	conf.Tags = map[string]string{
+		"test": "hello!",
+	}
+
 	evCh := make(chan serf.Event)
 	conf.EventCh = evCh
 

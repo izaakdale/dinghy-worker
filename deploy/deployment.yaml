@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dinghy-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dinghy-worker
+  template:
+    metadata:
+      labels:
+        app: dinghy-worker
+    spec:
+      containers:
+        - name: main-app
+          image: dinghy-worker
+          imagePullPolicy: Never
+          env:
+            - name: BIND_ADDR
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: BIND_PORT
+              value: "7777"
+            - name: ADVERTISE_ADDR
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: ADVERTISE_PORT
+              value: "7777"
+            - name: CLUSTER_ADDR
+              value: dinghy-agent-svc.default.svc.cluster.local
+            - name: CLUSTER_PORT
+              value: "7777"
+            - name: NAME
+              value: dinghy-worker
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+          - name: serf
+            containerPort: 7777
