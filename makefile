@@ -11,3 +11,8 @@ run:
 
 docker:
 	docker build -t dinghy-worker .
+
+up:
+	kubectl apply -k deploy/
+dn:
+	kubectl delete -k deploy/

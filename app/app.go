@@ -1,11 +1,14 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
+	"github.com/google/uuid"
 	"github.com/izaakdale/dinghy-worker/cluster"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -33,6 +36,9 @@ func New() *App {
 }
 
 func (a *App) Run() {
+	// since there will be multiple workers, we need unique names
+	name := fmt.Sprintf("%s-%s", spec.Name, strings.Split(uuid.NewString(), "-")[0])
+
 	node, evCh, err := cluster.Setup(
 		spec.BindAddr,
 		spec.BindPort, // BIND defines where the agent listen for incomming connection
@@ -40,7 +46,7 @@ func (a *App) Run() {
 		spec.AdvertisePort, // ADVERTISE defines where the agent is reachable, often it the same as BIND
 		spec.ClusterAddr,
 		spec.ClusterPort, // CLUSTER is the address of a first agent
-		spec.Name,
+		name,
 	) // NAME must be unique in a cluster
 	defer node.Leave()
 	if err != nil {
