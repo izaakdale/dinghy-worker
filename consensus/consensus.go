@@ -1,0 +1,5 @@
+package consensus
+
+func init() {
+
+}

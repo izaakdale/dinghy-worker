@@ -1,4 +1,4 @@
-package cluster
+package discovery
 
 import (
 	"log"
@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Setup(bindAddr, bindPort, advertiseAddr, advertisePort, clusterAddr, clusterPort, name string) (*serf.Serf, chan serf.Event, error) {
+func NewMembership(bindAddr, bindPort, advertiseAddr, advertisePort, clusterAddr, clusterPort, name string) (*serf.Serf, chan serf.Event, error) {
 	conf := serf.DefaultConfig()
 	conf.Init()
 	conf.MemberlistConfig.AdvertiseAddr = advertiseAddr

@@ -9,7 +9,7 @@ import (
 	"syscall"
 
 	"github.com/google/uuid"
-	"github.com/izaakdale/dinghy-worker/cluster"
+	"github.com/izaakdale/dinghy-worker/discovery"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -39,7 +39,7 @@ func (a *App) Run() {
 	// since there will be multiple workers, we need unique names
 	name := fmt.Sprintf("%s-%s", spec.Name, strings.Split(uuid.NewString(), "-")[0])
 
-	node, evCh, err := cluster.Setup(
+	node, evCh, err := discovery.NewMembership(
 		spec.BindAddr,
 		spec.BindPort, // BIND defines where the agent listen for incomming connection
 		spec.AdvertiseAddr,
