@@ -11,6 +11,7 @@ import (
 	"github.com/dgraph-io/badger/v2"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
+	"github.com/izaakdale/dinghy-worker/store"
 )
 
 const (
@@ -47,11 +48,11 @@ type (
 	}
 )
 
-func New(cfg Config) error {
+func New(cfg Config) (*raft.Raft, error) {
 	badgerOpt := badger.DefaultOptions(cfg.DataDir)
 	badgerDB, err := badger.Open(badgerOpt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer func() {
@@ -66,35 +67,39 @@ func New(cfg Config) error {
 	raftConf.LocalID = raft.ServerID(cfg.Name)
 	raftConf.SnapshotThreshold = 1024
 
-	store, err := raftboltdb.NewBoltStore(filepath.Join(cfg.DataDir, "raft.dataRepo"))
+	bolt, err := raftboltdb.NewBoltStore(filepath.Join(cfg.DataDir, "raft.dataRepo"))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Wrap the store in a LogCache to improve performance.
-	cacheStore, err := raft.NewLogCache(raftLogCacheSize, store)
+	cacheStore, err := raft.NewLogCache(raftLogCacheSize, bolt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	snapshotStore, err := raft.NewFileSnapshotStore(cfg.DataDir, raftSnapShotRetain, os.Stdout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", raftBinAddr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	transport, err := raft.NewTCPTransport(raftBinAddr, tcpAddr, maxPool, tcpTimeout, os.Stdout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	raftServer, err := raft.NewRaft(raftConf, &fsm{}, cacheStore, store, snapshotStore, transport)
+	db, err := store.New(badgerDB)
 	if err != nil {
-		return err
+		return nil, err
+	}
+	raftServer, err := raft.NewRaft(raftConf, &fsm{db}, cacheStore, bolt, snapshotStore, transport)
+	if err != nil {
+		return nil, err
 	}
 
 	// always start single server as a leader
@@ -108,5 +113,5 @@ func New(cfg Config) error {
 	}
 
 	raftServer.BootstrapCluster(configuration)
-	return nil
+	return raftServer, nil
 }

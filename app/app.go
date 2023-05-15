@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -14,6 +15,8 @@ import (
 var spec Specification
 
 type Specification struct {
+	GRPCAddr     string `envconfig:"GRPC_ADDR"`
+	GRPCPort     int    `envconfig:"GRPC_PORT"`
 	discoveryCfg discovery.Config
 	consensusCfg consensus.Config
 }
@@ -21,6 +24,9 @@ type Specification struct {
 type App struct{}
 
 func New() *App {
+	if err := envconfig.Process("", &spec); err != nil {
+		log.Fatalf("failed to process env vars: %v", err)
+	}
 	if err := envconfig.Process("", &spec.discoveryCfg); err != nil {
 		log.Fatalf("failed to process discovery env vars: %v", err)
 	}
@@ -31,10 +37,19 @@ func New() *App {
 }
 
 func (a *App) Run() {
-	consensus.New(spec.consensusCfg)
+	// raftNode, err := consensus.New(spec.consensusCfg)
+	_, err := consensus.New(spec.consensusCfg)
+	if err != nil {
+		log.Fatalf("failed to start up raft: %v", err)
+	}
 
-	node, evCh, err := discovery.NewMembership(spec.discoveryCfg)
-	defer node.Leave()
+	// set up a grpc server here to handle db transactions, pass raftNode to use raftNode.Apply(grpcMsg)
+
+	serfNode, evCh, err := discovery.NewMembership(spec.discoveryCfg, discovery.Tag{
+		Key:   "grpc_addr",
+		Value: fmt.Sprintf("%s:%d", spec.GRPCAddr, spec.GRPCPort),
+	})
+	defer serfNode.Leave()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +59,7 @@ func (a *App) Run() {
 	for {
 		select {
 		case <-shCh:
-			err := node.Leave()
+			err := serfNode.Leave()
 			if err != nil {
 				log.Fatalf("error leaving cluster %v", err)
 			}

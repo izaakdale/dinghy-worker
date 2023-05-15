@@ -5,15 +5,24 @@ import (
 	"log"
 
 	"github.com/hashicorp/raft"
+	"github.com/izaakdale/dinghy-worker/store"
 )
 
 type RequestType uint8
 
 const AppendRequestType RequestType = 0
 
-type fsm struct{}
+type fsm struct {
+	client *store.Client
+}
 
 func (f *fsm) Apply(record *raft.Log) any {
+	switch record.Type {
+	case raft.LogCommand:
+		if err := f.client.Insert([]byte("mikey"), []byte("valerie")); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
