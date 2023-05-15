@@ -1,21 +1,37 @@
 package discovery
 
 import (
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/serf/serf"
 	"github.com/pkg/errors"
 )
 
-func NewMembership(bindAddr, bindPort, advertiseAddr, advertisePort, clusterAddr, clusterPort, name string) (*serf.Serf, chan serf.Event, error) {
+type Config struct {
+	BindAddr      string `envconfig:"BIND_ADDR"`
+	BindPort      string `envconfig:"BIND_PORT"`
+	AdvertiseAddr string `envconfig:"ADVERTISE_ADDR"`
+	AdvertisePort string `envconfig:"ADVERTISE_PORT"`
+	ClusterAddr   string `envconfig:"CLUSTER_ADDR"`
+	ClusterPort   string `envconfig:"CLUSTER_PORT"`
+	Name          string `envconfig:"NAME"`
+}
+
+func NewMembership(cfg Config) (*serf.Serf, chan serf.Event, error) {
+	// since there will be multiple workers, we need unique names
 	conf := serf.DefaultConfig()
 	conf.Init()
-	conf.MemberlistConfig.AdvertiseAddr = advertiseAddr
-	conf.MemberlistConfig.AdvertisePort, _ = strconv.Atoi(advertisePort)
-	conf.MemberlistConfig.BindAddr = bindAddr
-	conf.MemberlistConfig.BindPort, _ = strconv.Atoi(bindPort)
+	conf.MemberlistConfig.AdvertiseAddr = cfg.AdvertiseAddr
+	conf.MemberlistConfig.AdvertisePort, _ = strconv.Atoi(cfg.AdvertisePort)
+	conf.MemberlistConfig.BindAddr = cfg.BindAddr
+	conf.MemberlistConfig.BindPort, _ = strconv.Atoi(cfg.BindPort)
 	conf.MemberlistConfig.ProtocolVersion = 3 // Version 3 enable the ability to bind different port for each agent
+
+	name := fmt.Sprintf("%s-%s", cfg.Name, strings.Split(uuid.NewString(), "-")[0])
 	conf.NodeName = name
 
 	conf.Tags = map[string]string{
@@ -30,7 +46,7 @@ func NewMembership(bindAddr, bindPort, advertiseAddr, advertisePort, clusterAddr
 		return nil, nil, errors.Wrap(err, "Couldn't create cluster")
 	}
 
-	_, err = cluster.Join([]string{clusterAddr + ":" + clusterPort}, true)
+	_, err = cluster.Join([]string{cfg.ClusterAddr + ":" + cfg.ClusterPort}, true)
 	if err != nil {
 		log.Printf("Couldn't join cluster, starting own: %v\n", err)
 	}

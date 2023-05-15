@@ -1,14 +1,12 @@
 package app
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
-	"github.com/google/uuid"
+	"github.com/izaakdale/dinghy-worker/consensus"
 	"github.com/izaakdale/dinghy-worker/discovery"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -16,38 +14,26 @@ import (
 var spec Specification
 
 type Specification struct {
-	BindAddr      string `envconfig:"BIND_ADDR"`
-	BindPort      string `envconfig:"BIND_PORT"`
-	AdvertiseAddr string `envconfig:"ADVERTISE_ADDR"`
-	AdvertisePort string `envconfig:"ADVERTISE_PORT"`
-	ClusterAddr   string `envconfig:"CLUSTER_ADDR"`
-	ClusterPort   string `envconfig:"CLUSTER_PORT"`
-	Name          string `envconfig:"NAME"`
+	discoveryCfg discovery.Config
+	consensusCfg consensus.Config
 }
 
-type App struct {
-}
+type App struct{}
 
 func New() *App {
-	if err := envconfig.Process("", &spec); err != nil {
-		panic(err)
+	if err := envconfig.Process("", &spec.discoveryCfg); err != nil {
+		log.Fatalf("failed to process discovery env vars: %v", err)
+	}
+	if err := envconfig.Process("", &spec.consensusCfg); err != nil {
+		log.Fatalf("failed to process consensus env vars: %v", err)
 	}
 	return &App{}
 }
 
 func (a *App) Run() {
-	// since there will be multiple workers, we need unique names
-	name := fmt.Sprintf("%s-%s", spec.Name, strings.Split(uuid.NewString(), "-")[0])
+	consensus.New(spec.consensusCfg)
 
-	node, evCh, err := discovery.NewMembership(
-		spec.BindAddr,
-		spec.BindPort, // BIND defines where the agent listen for incomming connection
-		spec.AdvertiseAddr,
-		spec.AdvertisePort, // ADVERTISE defines where the agent is reachable, often it the same as BIND
-		spec.ClusterAddr,
-		spec.ClusterPort, // CLUSTER is the address of a first agent
-		name,
-	) // NAME must be unique in a cluster
+	node, evCh, err := discovery.NewMembership(spec.discoveryCfg)
 	defer node.Leave()
 	if err != nil {
 		log.Fatal(err)
