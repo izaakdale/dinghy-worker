@@ -93,6 +93,9 @@ func (a *App) Run() {
 	serfNode, evCh, err := discovery.NewMembership(name, spec.discoveryCfg, discovery.Tag{
 		Key:   "grpc_addr",
 		Value: fmt.Sprintf("%s:%d", spec.GRPCAddr, spec.GRPCPort),
+	}, discovery.Tag{
+		Key:   "raft_addr",
+		Value: fmt.Sprintf("%s:%d", spec.consensusCfg.Addr, spec.consensusCfg.Port),
 	})
 	defer serfNode.Leave()
 	if err != nil {
