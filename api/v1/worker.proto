@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package v1;
+package worker.v1;
 option go_package="github.com/izaakdale/dinghy-worker/api/v1";
 
 message JoinRequest {

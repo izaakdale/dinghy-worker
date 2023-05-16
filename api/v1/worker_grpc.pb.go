@@ -39,7 +39,7 @@ func NewWorkerClient(cc grpc.ClientConnInterface) WorkerClient {
 
 func (c *workerClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinResponse, error) {
 	out := new(JoinResponse)
-	err := c.cc.Invoke(ctx, "/v1.Worker/Join", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/worker.v1.Worker/Join", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *workerClient) Join(ctx context.Context, in *JoinRequest, opts ...grpc.C
 
 func (c *workerClient) Insert(ctx context.Context, in *InsertRequest, opts ...grpc.CallOption) (*InsertResponse, error) {
 	out := new(InsertResponse)
-	err := c.cc.Invoke(ctx, "/v1.Worker/Insert", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/worker.v1.Worker/Insert", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (c *workerClient) Insert(ctx context.Context, in *InsertRequest, opts ...gr
 
 func (c *workerClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/v1.Worker/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/worker.v1.Worker/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (c *workerClient) Delete(ctx context.Context, in *DeleteRequest, opts ...gr
 
 func (c *workerClient) Fetch(ctx context.Context, in *FetchRequest, opts ...grpc.CallOption) (*FetchResponse, error) {
 	out := new(FetchResponse)
-	err := c.cc.Invoke(ctx, "/v1.Worker/Fetch", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/worker.v1.Worker/Fetch", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (c *workerClient) Fetch(ctx context.Context, in *FetchRequest, opts ...grpc
 
 func (c *workerClient) RaftState(ctx context.Context, in *RaftStateRequest, opts ...grpc.CallOption) (*RaftStateResponse, error) {
 	out := new(RaftStateResponse)
-	err := c.cc.Invoke(ctx, "/v1.Worker/RaftState", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/worker.v1.Worker/RaftState", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func _Worker_Join_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v1.Worker/Join",
+		FullMethod: "/worker.v1.Worker/Join",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkerServer).Join(ctx, req.(*JoinRequest))
@@ -154,7 +154,7 @@ func _Worker_Insert_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v1.Worker/Insert",
+		FullMethod: "/worker.v1.Worker/Insert",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkerServer).Insert(ctx, req.(*InsertRequest))
@@ -172,7 +172,7 @@ func _Worker_Delete_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v1.Worker/Delete",
+		FullMethod: "/worker.v1.Worker/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkerServer).Delete(ctx, req.(*DeleteRequest))
@@ -190,7 +190,7 @@ func _Worker_Fetch_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v1.Worker/Fetch",
+		FullMethod: "/worker.v1.Worker/Fetch",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkerServer).Fetch(ctx, req.(*FetchRequest))
@@ -208,7 +208,7 @@ func _Worker_RaftState_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/v1.Worker/RaftState",
+		FullMethod: "/worker.v1.Worker/RaftState",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(WorkerServer).RaftState(ctx, req.(*RaftStateRequest))
@@ -220,7 +220,7 @@ func _Worker_RaftState_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Worker_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "v1.Worker",
+	ServiceName: "worker.v1.Worker",
 	HandlerType: (*WorkerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

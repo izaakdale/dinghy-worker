@@ -11,6 +11,8 @@ import (
 
 	"github.com/dgraph-io/badger/v2"
 	"github.com/google/uuid"
+	"github.com/hashicorp/raft"
+	"github.com/hashicorp/serf/serf"
 	v1 "github.com/izaakdale/dinghy-worker/api/v1"
 	"github.com/izaakdale/dinghy-worker/internal/consensus"
 	"github.com/izaakdale/dinghy-worker/internal/discovery"
@@ -49,7 +51,7 @@ func New() *App {
 func (a *App) Run() {
 	name := fmt.Sprintf("%s-%s", spec.Name, strings.Split(uuid.NewString(), "-")[0])
 
-	log.Printf("%+v\n", name)
+	log.Printf("hello, my name is %s\n", name)
 
 	badgerOpt := badger.DefaultOptions(spec.consensusCfg.DataDir)
 	badgerDB, err := badger.Open(badgerOpt)
@@ -112,8 +114,19 @@ func (a *App) Run() {
 				log.Fatalf("error leaving cluster %v", err)
 			}
 			os.Exit(1)
-		case <-evCh:
-			log.Println("event channel triggered")
+		case e := <-evCh:
+			if raftNode.State() == raft.Leader {
+				switch e.EventType() {
+				case serf.EventMemberLeave, serf.EventMemberFailed:
+					for _, m := range e.(serf.MemberEvent).Members {
+						name, ok := m.Tags["name"]
+						if !ok {
+							log.Printf("no name tag in leaving member\n")
+						}
+						raftNode.RemoveServer(raft.ServerID(name), 0, 0)
+					}
+				}
+			}
 		case err := <-errCh:
 			log.Fatalf("grpc server errored: %v", err)
 		}

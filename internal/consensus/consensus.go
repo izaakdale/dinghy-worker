@@ -3,7 +3,6 @@ package consensus
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -51,7 +50,6 @@ func New(name string, cfg Config, dbClient *store.Client) (*raft.Raft, error) {
 	var raftBinAddr = fmt.Sprintf("%s:%d", cfg.Addr, cfg.Port)
 
 	raftConf := raft.DefaultConfig()
-	log.Printf("2: %+v\n", name)
 	raftConf.LocalID = raft.ServerID(name)
 	raftConf.SnapshotThreshold = 1024
 
