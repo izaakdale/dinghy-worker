@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/raft"
-	"github.com/izaakdale/dinghy-worker/store"
+	"github.com/izaakdale/dinghy-worker/internal/store"
 )
 
 type RequestType uint8

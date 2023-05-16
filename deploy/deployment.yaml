@@ -35,10 +35,26 @@ spec:
               value: "7777"
             - name: NAME
               value: dinghy-worker
+            - name:  DATA_DIR
+              value: node_data
+            - name:  RAFT_ADDR
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name:  RAFT_PORT
+              value: "8888"
+            - name:  GRPC_ADDR
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name:  GRPC_PORT
+              value: "5001"
           resources:
             limits:
               memory: "128Mi"
               cpu: "500m"
           ports:
+          - name: grpc
+            containerPort: 7777
           - name: serf
             containerPort: 7777

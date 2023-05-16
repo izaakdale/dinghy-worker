@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/izaakdale/dinghy-worker/consensus"
-	"github.com/izaakdale/dinghy-worker/discovery"
+	"github.com/izaakdale/dinghy-worker/internal/consensus"
+	"github.com/izaakdale/dinghy-worker/internal/discovery"
 	"github.com/kelseyhightower/envconfig"
 )
 

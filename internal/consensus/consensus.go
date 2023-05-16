@@ -11,7 +11,7 @@ import (
 	"github.com/dgraph-io/badger/v2"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
-	"github.com/izaakdale/dinghy-worker/store"
+	"github.com/izaakdale/dinghy-worker/internal/store"
 )
 
 const (

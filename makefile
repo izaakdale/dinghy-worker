@@ -10,6 +10,8 @@ run:
 	DATA_DIR=node_data \
 	RAFT_ADDR=127.0.0.1 \
 	RAFT_PORT=8888 \
+	GRPC_ADDR=127.0.0.1 \
+	GRPC_PORT=5001 \
 	go run .
 
 docker:
