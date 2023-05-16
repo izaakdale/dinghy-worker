@@ -3,12 +3,12 @@ package consensus
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/dgraph-io/badger/v2"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/izaakdale/dinghy-worker/internal/store"
@@ -37,7 +37,6 @@ type (
 		Addr    string `envconfig:"RAFT_ADDR"`
 		Port    int    `envconfig:"RAFT_PORT"`
 		DataDir string `envconfig:"DATA_DIR"`
-		Name    string `envconfig:"NAME"`
 	}
 	StreamLayer struct {
 		ln              net.Listener
@@ -48,23 +47,12 @@ type (
 	}
 )
 
-func New(cfg Config) (*raft.Raft, error) {
-	badgerOpt := badger.DefaultOptions(cfg.DataDir)
-	badgerDB, err := badger.Open(badgerOpt)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if err := badgerDB.Close(); err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "error closing badgerDB: %s\n", err.Error())
-		}
-	}()
-
+func New(name string, cfg Config, dbClient *store.Client) (*raft.Raft, error) {
 	var raftBinAddr = fmt.Sprintf("%s:%d", cfg.Addr, cfg.Port)
 
 	raftConf := raft.DefaultConfig()
-	raftConf.LocalID = raft.ServerID(cfg.Name)
+	log.Printf("2: %+v\n", name)
+	raftConf.LocalID = raft.ServerID(name)
 	raftConf.SnapshotThreshold = 1024
 
 	bolt, err := raftboltdb.NewBoltStore(filepath.Join(cfg.DataDir, "raft.dataRepo"))
@@ -93,11 +81,7 @@ func New(cfg Config) (*raft.Raft, error) {
 		return nil, err
 	}
 
-	db, err := store.New(badgerDB)
-	if err != nil {
-		return nil, err
-	}
-	raftServer, err := raft.NewRaft(raftConf, &fsm{db}, cacheStore, bolt, snapshotStore, transport)
+	raftServer, err := raft.NewRaft(raftConf, &fsm{dbClient}, cacheStore, bolt, snapshotStore, transport)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +90,7 @@ func New(cfg Config) (*raft.Raft, error) {
 	configuration := raft.Configuration{
 		Servers: []raft.Server{
 			{
-				ID:      raft.ServerID(cfg.Name),
+				ID:      raft.ServerID(name),
 				Address: transport.LocalAddr(),
 			},
 		},

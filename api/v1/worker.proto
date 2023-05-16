@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package v1;
+option go_package="github.com/izaakdale/dinghy-worker/api/v1";
+
+message JoinRequest {
+    string server_addr = 1;
+    string server_id = 2;
+}
+message JoinResponse {}
+
+message InsertRequest {
+    string key = 1;
+    string value = 2;
+}
+message InsertResponse {}
+
+message DeleteRequest {
+    string key = 1;
+}
+message DeleteResponse {}
+
+message FetchRequest {
+    string key = 1;
+}
+message FetchResponse {
+    string key = 1;
+    string value = 2;
+}
+
+message RaftStateRequest {}
+message RaftStateResponse {
+    string state = 1;
+}
+
+service Worker {
+    rpc Join(JoinRequest) returns (JoinResponse);
+    rpc Insert(InsertRequest) returns (InsertResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
+    rpc Fetch(FetchRequest) returns (FetchResponse);
+    rpc RaftState(RaftStateRequest) returns (RaftStateResponse);
+}
