@@ -6,11 +6,9 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/dgraph-io/badger/v2"
-	"github.com/google/uuid"
 	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/serf"
 	v1 "github.com/izaakdale/dinghy-worker/api/v1"
@@ -49,9 +47,7 @@ func New() *App {
 }
 
 func (a *App) Run() {
-	name := fmt.Sprintf("%s-%s", spec.Name, strings.Split(uuid.NewString(), "-")[0])
-
-	log.Printf("hello, my name is %s\n", name)
+	log.Printf("hello, my name is %s\n", spec.Name)
 
 	badgerOpt := badger.DefaultOptions(spec.consensusCfg.DataDir)
 	badgerDB, err := badger.Open(badgerOpt)
@@ -70,7 +66,7 @@ func (a *App) Run() {
 		log.Fatalf("failed to start up store client: %v", err)
 	}
 
-	raftNode, err := consensus.New(name, spec.consensusCfg, dbClient)
+	raftNode, err := consensus.New(spec.Name, spec.consensusCfg, dbClient)
 	if err != nil {
 		log.Fatalf("failed to start up raft: %v", err)
 	}
@@ -84,7 +80,7 @@ func (a *App) Run() {
 	gsrv := grpc.NewServer()
 	reflection.Register(gsrv)
 
-	srv := server.New(name, raftNode, dbClient)
+	srv := server.New(spec.Name, raftNode, dbClient)
 	v1.RegisterWorkerServer(gsrv, srv)
 
 	errCh := make(chan error)
@@ -92,7 +88,7 @@ func (a *App) Run() {
 		ch <- gsrv.Serve(ln)
 	}(errCh)
 
-	serfNode, evCh, err := discovery.NewMembership(name, spec.discoveryCfg, discovery.Tag{
+	serfNode, evCh, err := discovery.NewMembership(spec.Name, spec.discoveryCfg, discovery.Tag{
 		Key:   "grpc_addr",
 		Value: fmt.Sprintf("%s:%d", spec.GRPCAddr, spec.GRPCPort),
 	}, discovery.Tag{

@@ -34,7 +34,9 @@ spec:
             - name: CLUSTER_PORT
               value: "7777"
             - name: NAME
-              value: dinghy-worker
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name:  DATA_DIR
               value: node_data
             - name:  RAFT_ADDR
