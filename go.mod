@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/dgraph-io/badger/v2 v2.2007.4
-	github.com/google/uuid v1.3.0
 	github.com/hashicorp/raft v1.5.0
 	github.com/hashicorp/raft-boltdb v0.0.0-20230125174641-2a8082862702
 	github.com/hashicorp/serf v0.10.1
