@@ -33,6 +33,12 @@ message RaftStateResponse {
     string state = 1;
 }
 
+message LeaderHeaderbeat {
+    string raft_state = 1;
+    string grpc_addr = 2;
+    string raft_addr = 3;
+}
+
 service Worker {
     rpc Join(JoinRequest) returns (JoinResponse);
     rpc Insert(InsertRequest) returns (InsertResponse);

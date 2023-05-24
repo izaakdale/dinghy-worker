@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/dgraph-io/badger/v2"
 	"github.com/hashicorp/raft"
@@ -19,6 +20,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/protobuf/proto"
 )
 
 var spec Specification
@@ -88,17 +90,21 @@ func (a *App) Run() {
 		ch <- gsrv.Serve(ln)
 	}(errCh)
 
+	raftAddr := fmt.Sprintf("%s:%d", spec.consensusCfg.Addr, spec.consensusCfg.Port)
+
 	serfNode, evCh, err := discovery.NewMembership(spec.Name, spec.discoveryCfg, discovery.Tag{
 		Key:   "grpc_addr",
-		Value: fmt.Sprintf("%s:%d", spec.GRPCAddr, spec.GRPCPort),
+		Value: gAddr,
 	}, discovery.Tag{
 		Key:   "raft_addr",
-		Value: fmt.Sprintf("%s:%d", spec.consensusCfg.Addr, spec.consensusCfg.Port),
+		Value: raftAddr,
 	})
 	defer serfNode.Leave()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	t := time.Tick(time.Second)
 
 	shCh := make(chan os.Signal, 2)
 	signal.Notify(shCh, os.Interrupt, syscall.SIGTERM)
@@ -122,6 +128,19 @@ func (a *App) Run() {
 						raftNode.RemoveServer(raft.ServerID(name), 0, 0)
 					}
 				}
+			}
+		case <-t:
+			if raftNode.State() == raft.Leader {
+				payload := v1.LeaderHeaderbeat{
+					RaftState: raftNode.State().String(),
+					GrpcAddr:  gAddr,
+					RaftAddr:  raftAddr,
+				}
+				bytes, err := proto.Marshal(&payload)
+				if err != nil {
+					log.Printf("error marshalling leader heartbeat payload: %v\n", err)
+				}
+				serfNode.UserEvent("leader-notification", bytes, true)
 			}
 		case err := <-errCh:
 			log.Fatalf("grpc server errored: %v", err)

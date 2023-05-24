@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/raft"
 	v1 "github.com/izaakdale/dinghy-worker/api/v1"
 	"github.com/izaakdale/dinghy-worker/internal/store"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -66,6 +68,10 @@ func (s *Server) Delete(ctx context.Context, request *v1.DeleteRequest) (*v1.Del
 func (s *Server) Fetch(ctx context.Context, request *v1.FetchRequest) (*v1.FetchResponse, error) {
 	val, err := s.client.Fetch([]byte(request.Key))
 	if err != nil {
+		if err == store.ErrNotFound {
+			st := status.New(codes.NotFound, "no records exist for the given key.")
+			return nil, st.Err()
+		}
 		return nil, err
 	}
 	return &v1.FetchResponse{Key: request.Key, Value: string(val)}, nil
