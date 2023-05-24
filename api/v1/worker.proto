@@ -34,9 +34,10 @@ message RaftStateResponse {
 }
 
 message LeaderHeaderbeat {
-    string raft_state = 1;
-    string grpc_addr = 2;
-    string raft_addr = 3;
+    string name = 1;
+    string raft_state = 2;
+    string grpc_addr = 3;
+    string raft_addr = 4;
 }
 
 service Worker {
