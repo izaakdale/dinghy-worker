@@ -79,6 +79,7 @@ func New(name string, cfg Config, dbClient *store.Client) (*raft.Raft, error) {
 		return nil, err
 	}
 
+	// TODO shouldn't be using bolt as stable store here. This should be something like s3
 	raftServer, err := raft.NewRaft(raftConf, &fsm{dbClient}, cacheStore, bolt, snapshotStore, transport)
 	if err != nil {
 		return nil, err

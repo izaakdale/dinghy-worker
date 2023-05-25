@@ -132,6 +132,7 @@ func (a *App) Run() {
 		case <-t:
 			if raftNode.State() == raft.Leader {
 				payload := v1.LeaderHeaderbeat{
+					Name:      spec.Name,
 					RaftState: raftNode.State().String(),
 					GrpcAddr:  gAddr,
 					RaftAddr:  raftAddr,

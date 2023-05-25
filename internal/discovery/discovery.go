@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"io"
 	"log"
 	"strconv"
 
@@ -33,6 +34,10 @@ func NewMembership(name string, cfg Config, tags ...Tag) (*serf.Serf, chan serf.
 	conf.MemberlistConfig.BindPort, _ = strconv.Atoi(cfg.BindPort)
 	conf.MemberlistConfig.ProtocolVersion = 3 // Version 3 enable the ability to bind different port for each agent
 	conf.NodeName = name
+
+	// prevent annoying serf and memberlist logs logs
+	conf.MemberlistConfig.Logger = log.New(io.Discard, "", log.Flags())
+	conf.Logger = log.New(io.Discard, "", log.Flags())
 
 	t := make(map[string]string, len(tags))
 	t["name"] = name
