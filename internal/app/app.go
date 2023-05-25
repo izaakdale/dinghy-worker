@@ -104,7 +104,8 @@ func (a *App) Run() {
 		log.Fatal(err)
 	}
 
-	t := time.Tick(time.Second)
+	// let start up to settle before sending state heartbeats
+	t := newDelayedTicker()
 
 	shCh := make(chan os.Signal, 2)
 	signal.Notify(shCh, os.Interrupt, syscall.SIGTERM)
@@ -147,4 +148,9 @@ func (a *App) Run() {
 			log.Fatalf("grpc server errored: %v", err)
 		}
 	}
+}
+
+func newDelayedTicker() <-chan time.Time {
+	time.Sleep(10 * time.Second)
+	return time.Tick(time.Second)
 }
