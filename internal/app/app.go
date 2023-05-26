@@ -116,6 +116,12 @@ func (a *App) Run() {
 			if err != nil {
 				log.Fatalf("error leaving cluster %v", err)
 			}
+			if raftNode.State() == raft.Leader {
+				f := raftNode.RemoveServer(raft.ServerID(spec.Name), 0, 0)
+				if f.Error() != nil {
+					log.Printf("error leaving raft cluster: %v\n", f.Error())
+				}
+			}
 			os.Exit(1)
 		case e := <-evCh:
 			if raftNode.State() == raft.Leader {
@@ -131,6 +137,8 @@ func (a *App) Run() {
 				}
 			}
 		case <-t:
+			log.Printf("ticker triggered\n")
+			log.Printf("state: %s\n", raftNode.State())
 			if raftNode.State() == raft.Leader {
 				payload := v1.LeaderHeaderbeat{
 					Name:      spec.Name,
