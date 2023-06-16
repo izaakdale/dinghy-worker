@@ -109,6 +109,8 @@ func (a *App) Run() {
 
 	shCh := make(chan os.Signal, 2)
 	signal.Notify(shCh, os.Interrupt, syscall.SIGTERM)
+
+Loop:
 	for {
 		select {
 		case <-shCh:
@@ -116,13 +118,7 @@ func (a *App) Run() {
 			if err != nil {
 				log.Fatalf("error leaving cluster %v", err)
 			}
-			if raftNode.State() == raft.Leader {
-				f := raftNode.RemoveServer(raft.ServerID(spec.Name), 0, 0)
-				if f.Error() != nil {
-					log.Printf("error leaving raft cluster: %v\n", f.Error())
-				}
-			}
-			os.Exit(1)
+			break Loop
 		case e := <-evCh:
 			if raftNode.State() == raft.Leader {
 				switch e.EventType() {
@@ -137,25 +133,29 @@ func (a *App) Run() {
 				}
 			}
 		case <-t:
-			log.Printf("ticker triggered\n")
-			log.Printf("state: %s\n", raftNode.State())
-			if raftNode.State() == raft.Leader {
-				payload := v1.LeaderHeaderbeat{
-					Name:      spec.Name,
-					RaftState: raftNode.State().String(),
-					GrpcAddr:  gAddr,
-					RaftAddr:  raftAddr,
-				}
-				bytes, err := proto.Marshal(&payload)
-				if err != nil {
-					log.Printf("error marshalling leader heartbeat payload: %v\n", err)
-				}
-				serfNode.UserEvent("leader-notification", bytes, true)
+			payload := v1.ServerHeartbeat{
+				Name:     spec.Name,
+				GrpcAddr: gAddr,
+				RaftAddr: raftAddr,
+				IsLeader: raftNode.State() == raft.Leader,
+			}
+			bytes, err := proto.Marshal(&payload)
+			if err != nil {
+				log.Printf("error marshalling leader heartbeat payload: %v\n", err)
+			}
+			if err = serfNode.UserEvent("leader-notification", bytes, true); err != nil {
+				log.Printf("error sengin user event\n")
 			}
 		case err := <-errCh:
 			log.Fatalf("grpc server errored: %v", err)
 		}
 	}
+
+	log.Printf("shutting down raft node\n")
+	if future := raftNode.Shutdown(); future.Error() != nil {
+		log.Printf("error shutting raftnode down\n")
+	}
+	os.Exit(1)
 }
 
 func newDelayedTicker() <-chan time.Time {

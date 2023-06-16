@@ -6,7 +6,7 @@ run1:
 	ADVERTISE_PORT=7778 \
 	CLUSTER_ADDR=127.0.0.1 \
 	CLUSTER_PORT=7777 \
-	NAME=worker \
+	NAME=worker1 \
 	DATA_DIR=node_data_1 \
 	RAFT_ADDR=127.0.0.1 \
 	RAFT_PORT=8888 \
@@ -20,7 +20,7 @@ run2:
 	ADVERTISE_PORT=7779 \
 	CLUSTER_ADDR=127.0.0.1 \
 	CLUSTER_PORT=7777 \
-	NAME=worker \
+	NAME=worker2 \
 	DATA_DIR=node_data_2 \
 	RAFT_ADDR=127.0.0.1 \
 	RAFT_PORT=8889 \

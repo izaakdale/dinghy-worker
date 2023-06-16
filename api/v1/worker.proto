@@ -33,11 +33,11 @@ message RaftStateResponse {
     string state = 1;
 }
 
-message LeaderHeaderbeat {
+message ServerHeartbeat {
     string name = 1;
-    string raft_state = 2;
     string grpc_addr = 3;
     string raft_addr = 4;
+    bool is_leader = 5;
 }
 
 service Worker {
