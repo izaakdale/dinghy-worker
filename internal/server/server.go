@@ -44,6 +44,9 @@ func (s *Server) Join(ctx context.Context, request *v1.JoinRequest) (*v1.JoinRes
 }
 
 func (s *Server) Insert(ctx context.Context, request *v1.InsertRequest) (*v1.InsertResponse, error) {
+	if s.consensus.State() != raft.Leader {
+		return nil, fmt.Errorf("cannot insert since I'm not the raft leader.")
+	}
 	protoBytes, err := proto.Marshal(request)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling request to proto bytes: %v", err)

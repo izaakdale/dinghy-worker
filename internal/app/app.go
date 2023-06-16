@@ -114,6 +114,7 @@ Loop:
 	for {
 		select {
 		case <-shCh:
+			raftNode.RemoveServer(raft.ServerID(spec.Name), 0, 0)
 			err := serfNode.Leave()
 			if err != nil {
 				log.Fatalf("error leaving cluster %v", err)
@@ -133,6 +134,7 @@ Loop:
 				}
 			}
 		case <-t:
+			log.Printf("my status: %s\n", raftNode.State())
 			payload := v1.ServerHeartbeat{
 				Name:     spec.Name,
 				GrpcAddr: gAddr,
@@ -143,7 +145,7 @@ Loop:
 			if err != nil {
 				log.Printf("error marshalling leader heartbeat payload: %v\n", err)
 			}
-			if err = serfNode.UserEvent("leader-notification", bytes, true); err != nil {
+			if err = serfNode.UserEvent("leader-notification", bytes, false); err != nil {
 				log.Printf("error sengin user event\n")
 			}
 		case err := <-errCh:
@@ -152,12 +154,11 @@ Loop:
 	}
 
 	log.Printf("shutting down raft node\n")
-	if future := raftNode.Shutdown(); future.Error() != nil {
-		log.Printf("error shutting raftnode down\n")
-	}
 	os.Exit(1)
 }
 
+// delayed ticker allows time for the leader to claim leadership before a green service
+// starts emmitting leader messages (until it is told to join by the agent it will assume it is a leader)
 func newDelayedTicker() <-chan time.Time {
 	time.Sleep(10 * time.Second)
 	return time.Tick(time.Second)
