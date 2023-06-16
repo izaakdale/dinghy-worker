@@ -13,14 +13,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// ensure our server adheres to grpc cache server
+// ensure our server adheres to grpc worker server
 var _ v1.WorkerServer = (*Server)(nil)
 
 type Server struct {
 	v1.UnimplementedWorkerServer
 	name      string
 	consensus *raft.Raft
-	client    *store.Client
+	client    store.Transactioner
 }
 
 func New(name string, consensus *raft.Raft, c *store.Client) *Server {
