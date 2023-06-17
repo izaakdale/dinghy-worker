@@ -134,7 +134,6 @@ Loop:
 				}
 			}
 		case <-t:
-			log.Printf("my status: %s\n", raftNode.State())
 			payload := v1.ServerHeartbeat{
 				Name:     spec.Name,
 				GrpcAddr: gAddr,
@@ -146,7 +145,7 @@ Loop:
 				log.Printf("error marshalling leader heartbeat payload: %v\n", err)
 			}
 			if err = serfNode.UserEvent("leader-notification", bytes, false); err != nil {
-				log.Printf("error sengin user event\n")
+				log.Printf("error sending user event\n")
 			}
 		case err := <-errCh:
 			log.Fatalf("grpc server errored: %v", err)
