@@ -133,7 +133,7 @@ Loop:
 					}
 				}
 			}
-		case <-t:
+		case <-t.C:
 			payload := v1.ServerHeartbeat{
 				Name:     spec.Name,
 				GrpcAddr: gAddr,
@@ -153,12 +153,12 @@ Loop:
 	}
 
 	log.Printf("shutting down raft node\n")
-	os.Exit(1)
+	os.Exit(0)
 }
 
 // delayed ticker allows time for the leader to claim leadership before a green service
 // starts emmitting leader messages (until it is told to join by the agent it will assume it is a leader)
-func newDelayedTicker() <-chan time.Time {
+func newDelayedTicker() *time.Ticker {
 	time.Sleep(10 * time.Second)
-	return time.Tick(time.Second)
+	return time.NewTicker(time.Second)
 }
