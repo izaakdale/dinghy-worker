@@ -1,7 +1,6 @@
 package consensus
 
 import (
-	"crypto/tls"
 	"fmt"
 	"net"
 	"os"
@@ -36,13 +35,6 @@ type (
 		Addr    string `envconfig:"RAFT_ADDR"`
 		Port    int    `envconfig:"RAFT_PORT"`
 		DataDir string `envconfig:"DATA_DIR"`
-	}
-	StreamLayer struct {
-		ln              net.Listener
-		serverTLSConfig *tls.Config
-		peerTLSConfig   *tls.Config
-	}
-	snapshot struct {
 	}
 )
 

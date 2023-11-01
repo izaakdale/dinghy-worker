@@ -10,15 +10,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type RequestType uint8
-
-const AppendRequestType RequestType = 0
-
 type fsm struct {
 	client *store.Client
-}
-
-type ApplyResponse struct {
 }
 
 func (f *fsm) Apply(record *raft.Log) any {
@@ -28,6 +21,20 @@ func (f *fsm) Apply(record *raft.Log) any {
 		if err := proto.Unmarshal(record.Data, &req); err != nil {
 			return err
 		}
+
+		// if no value was present this is a delete request
+		if req.Value == "" {
+			var req v1.DeleteRequest
+			if err := proto.Unmarshal(record.Data, &req); err != nil {
+				return err
+			}
+
+			if err := f.client.Delete([]byte(req.Key)); err != nil {
+				return err
+			}
+			return nil
+		}
+
 		if err := f.client.Insert([]byte(req.Key), []byte(req.Value)); err != nil {
 			return err
 		}
@@ -40,14 +47,14 @@ func (f *fsm) Snapshot() (raft.FSMSnapshot, error) {
 	return nil, nil
 }
 
-func (s *snapshot) Persist(sink raft.SnapshotSink) error {
-	log.Printf("attempted persist in fsm")
-	return nil
-}
+// func (s *snapshot) Persist(sink raft.SnapshotSink) error {
+// 	log.Printf("attempted persist in fsm")
+// 	return nil
+// }
 
-func (s *snapshot) Release() {
-	log.Printf("attempted release in fsm")
-}
+// func (s *snapshot) Release() {
+// 	log.Printf("attempted release in fsm")
+// }
 
 func (f *fsm) Restore(snapshot io.ReadCloser) error {
 	log.Printf("attempted restore in fsm")

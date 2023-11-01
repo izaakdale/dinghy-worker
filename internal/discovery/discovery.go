@@ -29,13 +29,21 @@ func NewMembership(name string, cfg Config, tags ...Tag) (*serf.Serf, chan serf.
 	conf := serf.DefaultConfig()
 	conf.Init()
 	conf.MemberlistConfig.AdvertiseAddr = cfg.AdvertiseAddr
-	conf.MemberlistConfig.AdvertisePort, _ = strconv.Atoi(cfg.AdvertisePort)
+
+	var err error
+	conf.MemberlistConfig.AdvertisePort, err = strconv.Atoi(cfg.AdvertisePort)
+	if err != nil {
+		return nil, nil, err
+	}
 	conf.MemberlistConfig.BindAddr = cfg.BindAddr
-	conf.MemberlistConfig.BindPort, _ = strconv.Atoi(cfg.BindPort)
+	conf.MemberlistConfig.BindPort, err = strconv.Atoi(cfg.BindPort)
+	if err != nil {
+		return nil, nil, err
+	}
 	conf.MemberlistConfig.ProtocolVersion = 3 // Version 3 enable the ability to bind different port for each agent
 	conf.NodeName = name
 
-	// prevent annoying serf and memberlist logs logs
+	// prevent annoying serf and memberlist logs
 	conf.MemberlistConfig.Logger = log.New(io.Discard, "", log.Flags())
 	conf.Logger = log.New(io.Discard, "", log.Flags())
 
