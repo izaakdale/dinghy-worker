@@ -23,8 +23,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var spec Specification
-
 type Specification struct {
 	GRPCAddr     string `envconfig:"GRPC_ADDR"`
 	GRPCPort     int    `envconfig:"GRPC_PORT"`
@@ -33,9 +31,8 @@ type Specification struct {
 	consensusCfg consensus.Config
 }
 
-type App struct{}
-
-func New() *App {
+func Run() {
+	var spec Specification
 	if err := envconfig.Process("", &spec); err != nil {
 		log.Fatalf("failed to process env vars: %v", err)
 	}
@@ -45,10 +42,6 @@ func New() *App {
 	if err := envconfig.Process("", &spec.consensusCfg); err != nil {
 		log.Fatalf("failed to process consensus env vars: %v", err)
 	}
-	return &App{}
-}
-
-func (a *App) Run() {
 	log.Printf("hello, my name is %s\n", spec.Name)
 
 	badgerOpt := badger.DefaultOptions(spec.consensusCfg.DataDir)
@@ -92,13 +85,16 @@ func (a *App) Run() {
 
 	raftAddr := fmt.Sprintf("%s:%d", spec.consensusCfg.Addr, spec.consensusCfg.Port)
 
-	serfNode, evCh, err := discovery.NewMembership(spec.Name, spec.discoveryCfg, discovery.Tag{
-		Key:   "grpc_addr",
-		Value: gAddr,
-	}, discovery.Tag{
-		Key:   "raft_addr",
-		Value: raftAddr,
-	})
+	serfNode, evCh, err := discovery.NewMembership(spec.Name, spec.discoveryCfg,
+		discovery.Tag{
+			Key:   "grpc_addr",
+			Value: gAddr,
+		},
+		discovery.Tag{
+			Key:   "raft_addr",
+			Value: raftAddr,
+		},
+	)
 	defer serfNode.Leave()
 	if err != nil {
 		log.Fatal(err)

@@ -45,7 +45,7 @@ func (s *Server) Join(ctx context.Context, request *v1.JoinRequest) (*v1.JoinRes
 
 func (s *Server) Insert(ctx context.Context, request *v1.InsertRequest) (*v1.InsertResponse, error) {
 	if s.consensus.State() != raft.Leader {
-		return nil, fmt.Errorf("cannot insert since I'm not the raft leader.")
+		return nil, fmt.Errorf("cannot insert since I'm not the raft leader")
 	}
 	protoBytes, err := proto.Marshal(request)
 	if err != nil {
@@ -64,8 +64,24 @@ func (s *Server) Insert(ctx context.Context, request *v1.InsertRequest) (*v1.Ins
 }
 
 func (s *Server) Delete(ctx context.Context, request *v1.DeleteRequest) (*v1.DeleteResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	if s.consensus.State() != raft.Leader {
+		return nil, fmt.Errorf("cannot delete since I'm not the raft leader")
+	}
+
+	protoBytes, err := proto.Marshal(request)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling request to proto bytes: %v", err)
+	}
+
+	applyFuture := s.consensus.Apply(protoBytes, 500*time.Millisecond)
+	if err := applyFuture.Error(); err != nil {
+		return nil, fmt.Errorf("error applying request to raft cluster: %v", err)
+	}
+
+	if err, ok := applyFuture.Response().(error); ok {
+		return nil, fmt.Errorf("error from raft node when applying request: %v", err)
+	}
+	return &v1.DeleteResponse{}, nil
 }
 
 func (s *Server) Fetch(ctx context.Context, request *v1.FetchRequest) (*v1.FetchResponse, error) {

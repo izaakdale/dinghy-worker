@@ -42,6 +42,7 @@ func (c *Client) Delete(k []byte) error {
 	txn := c.NewTransaction(true)
 	err := txn.Delete(k)
 	if err != nil {
+		txn.Discard()
 		return err
 	}
 	return txn.Commit()
