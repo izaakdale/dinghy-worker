@@ -94,6 +94,10 @@ func Run() {
 			Key:   "raft_addr",
 			Value: raftAddr,
 		},
+		discovery.Tag{
+			Key:   "type",
+			Value: "worker",
+		},
 	)
 	defer serfNode.Leave()
 	if err != nil {

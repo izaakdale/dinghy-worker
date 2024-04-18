@@ -32,9 +32,9 @@ docker:
 	docker build -t dinghy-worker .
 
 up:
-	kubectl apply -k deploy/
+	kubectl apply -k deploy/ -n default
 dn:
-	kubectl delete -k deploy/
+	kubectl delete -k deploy/ -n default
 
 .PHONY: gproto
 gproto:
