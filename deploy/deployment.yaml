@@ -12,6 +12,10 @@ spec:
       labels:
         app: dinghy-worker
     spec:
+      volumes:
+        - name: snapshot-storage
+          persistentVolumeClaim:
+            claimName: snapshot-pv-claim
       containers:
         - name: main-app
           image: dinghy-worker
@@ -22,41 +26,44 @@ spec:
                 fieldRef:
                   fieldPath: status.podIP
             - name: BIND_PORT
-              value: "7777"
+              value: '7777'
             - name: ADVERTISE_ADDR
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
             - name: ADVERTISE_PORT
-              value: "7777"
+              value: '7777'
             - name: CLUSTER_ADDR
               value: dinghy-agent-svc.default.svc.cluster.local
             - name: CLUSTER_PORT
-              value: "7777"
+              value: '7777'
             - name: NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name:  DATA_DIR
+            - name: DATA_DIR
               value: node_data
-            - name:  RAFT_ADDR
+            - name: RAFT_ADDR
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name:  RAFT_PORT
-              value: "8888"
-            - name:  GRPC_ADDR
+            - name: RAFT_PORT
+              value: '8888'
+            - name: GRPC_ADDR
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name:  GRPC_PORT
-              value: "5001"
+            - name: GRPC_PORT
+              value: '5001'
           resources:
             limits:
-              memory: "128Mi"
-              cpu: "500m"
+              memory: '128Mi'
+              cpu: '500m'
           ports:
-          - name: grpc
-            containerPort: 7777
-          - name: serf
-            containerPort: 7777
+            - name: grpc
+              containerPort: 7777
+            - name: serf
+              containerPort: 7777
+          volumeMounts:
+            - mountPath: '/node_data'
+              name: snapshot-storage

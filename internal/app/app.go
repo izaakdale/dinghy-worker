@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 	"time"
 
@@ -44,16 +45,19 @@ func Run() {
 	}
 	log.Printf("hello, my name is %s\n", spec.Name)
 
-	badgerOpt := badger.DefaultOptions(spec.consensusCfg.DataDir)
+	badgerOpt := badger.DefaultOptions(path.Join(spec.consensusCfg.DataDir, spec.Name))
 	badgerDB, err := badger.Open(badgerOpt)
 	if err != nil {
 		log.Fatalf("failed to start up badger db: %v", err)
 	}
 
+	log.Printf("reaching 1\n")
+
 	defer func() {
 		if err := badgerDB.Close(); err != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "error closing badgerDB: %s\n", err.Error())
 		}
+		log.Printf("closing down badger\n")
 	}()
 
 	dbClient, err := store.New(badgerDB)
@@ -61,16 +65,23 @@ func Run() {
 		log.Fatalf("failed to start up store client: %v", err)
 	}
 
+	log.Printf("reaching 2\n")
+
 	raftNode, err := consensus.New(spec.Name, spec.consensusCfg, dbClient)
 	if err != nil {
 		log.Fatalf("failed to start up raft: %v", err)
 	}
+	defer raftNode.Shutdown()
+
+	log.Printf("reaching 3\n")
 
 	gAddr := fmt.Sprintf("%s:%d", spec.GRPCAddr, spec.GRPCPort)
 	ln, err := net.Listen("tcp", gAddr)
 	if err != nil {
 		log.Fatalf("failed to start up grpc listener: %v", err)
 	}
+
+	log.Printf("reaching 4\n")
 
 	gsrv := grpc.NewServer()
 	reflection.Register(gsrv)
@@ -104,21 +115,26 @@ func Run() {
 		log.Fatal(err)
 	}
 
+	log.Printf("reaching 5\n")
+
 	// let start up to settle before sending state heartbeats
 	t := newDelayedTicker()
 
 	shCh := make(chan os.Signal, 2)
 	signal.Notify(shCh, os.Interrupt, syscall.SIGTERM)
 
+	log.Printf("reaching 6\n")
 Loop:
 	for {
 		select {
 		case <-shCh:
+			log.Printf("shutting down\n")
 			raftNode.RemoveServer(raft.ServerID(spec.Name), 0, 0)
 			err := serfNode.Leave()
 			if err != nil {
 				log.Fatalf("error leaving cluster %v", err)
 			}
+			dbClient.Close()
 			break Loop
 		case e := <-evCh:
 			if raftNode.State() == raft.Leader {

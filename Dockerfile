@@ -6,8 +6,10 @@ RUN go mod download
 
 RUN go build -o dinghy-worker .
 
-FROM scratch
-WORKDIR /bin
-COPY --from=builder /dinghy-worker /bin
+# CMD [ "/dinghy-worker" ]
 
-CMD [ "/bin/dinghy-worker" ]
+FROM alpine
+WORKDIR /
+COPY --from=builder /dinghy-worker /
+
+CMD [ "/dinghy-worker" ]

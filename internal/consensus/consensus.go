@@ -58,10 +58,10 @@ func New(name string, cfg Config, dbClient *store.Client) (*raft.Raft, error) {
 		return nil, err
 	}
 
-	// snapshotStore, err := raft.NewFileSnapshotStore(cfg.DataDir, raftSnapShotRetain, os.Stdout)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	snapshotStore, err := raft.NewFileSnapshotStore(cfg.DataDir, raftSnapShotRetain, os.Stdout)
+	if err != nil {
+		return nil, err
+	}
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", raftBinAddr)
 	if err != nil {
@@ -74,8 +74,8 @@ func New(name string, cfg Config, dbClient *store.Client) (*raft.Raft, error) {
 	}
 
 	// TODO shouldn't be using bolt as stable store here. This should be something like s3
-	// raftServer, err := raft.NewRaft(raftConf, &fsm{dbClient}, cacheStore, bolt, snapshotStore, transport)
-	raftServer, err := raft.NewRaft(raftConf, &fsm{dbClient}, cacheStore, bolt, &snapshotStore{}, transport)
+	raftServer, err := raft.NewRaft(raftConf, &fsm{dbClient, []*raft.Log{}}, cacheStore, bolt, snapshotStore, transport)
+	// raftServer, err := raft.NewRaft(raftConf, &fsm{dbClient}, cacheStore, bolt, &snapshotStore{}, transport)
 	if err != nil {
 		return nil, err
 	}

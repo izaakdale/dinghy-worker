@@ -1,11 +1,18 @@
 package store
 
 import (
+	"log"
+
 	"github.com/dgraph-io/badger/v2"
 )
 
 type Client struct {
 	*badger.DB
+}
+
+func (c *Client) Close() error {
+	log.Printf("closing down DB client\n")
+	return c.DB.Close()
 }
 
 func (c *Client) Insert(k, v []byte) error {
